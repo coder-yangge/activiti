@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<title>Insert title here</title>
+  <link rel="stylesheet" href="../layui/css/layui.css"  media="all">
+</head>
+<script src="../layui/layui.all.js" charset="utf-8"></script>
+<script src="../juqery/jquery.js" charset="utf-8"></script>
+<script type="text/javascript">
+	;!function(){
+	  var layer = layui.layer
+	  ,form = layui.form;
+	 
+	}();
+	$(function (){
+		// layer.msg('Hello World');
+		 var table = layui.table;
+		 //var layer = layui.layer; 
+		  table.render({
+		    elem: '#modelTable'
+		    ,url:'${request.contextPath}/model/list'
+		    ,hight:380
+		    ,parseData: function(res){ //res 即为原始返回的数据
+		        return {
+		          "code": res.code, //解析接口状态
+		          "msg": res.msg, //解析提示文本
+		          "count": res.data.count, //解析数据长度
+		          "data": res.data.data //解析数据列表
+		        };
+		    }
+		    ,cols: [[
+		      {type: 'checkbox', fixed: 'left'}
+		      ,{field:'id', align: 'center', title: 'ID', sort: true}
+		      ,{field:'name',  title: '名称' , align: 'center'}
+		      ,{field:'key', title: '模型key', sort: true, align: 'center'}
+		      ,{field:'version', title: '版本' , width:80, align: 'center'}
+		      ,{field:'createTime', title: '创建时间', align: 'center'}
+		      ,{field:'lastUpdateTime', title: '最后更新时间', align: 'center'}
+		      ,{fixed: 'right', width:200, title:'操作', toolbar: '#barDemo', align: 'center'}
+		    ]]
+		    ,page: true
+		  });
+		  //监听行工具事件
+		  table.on('tool(model)', function(obj){
+		    var data = obj.data;
+		    //console.log(obj)
+		    if(obj.event === 'editModel'){
+		    	console.log(data.id);
+		     	layer.open({
+		     		type: 2,
+		     		maxmin: true,
+		     		title: "流程定义图",
+		     		skin: 'layui-layer-molv',
+		     		area: ['1000px', '600px'],
+		     		content: "${request.contextPath}/modeler.html?modelId=" + data.id
+		     	});
+		    } 
+		    if (obj.event === 'deploy'){
+		    	var params = {};
+		        $.ajax({
+		        	type: 'POST',
+		        	data: {modelId: data.id},
+		        	url: '${request.contextPath}/model/deploy',
+		        	success: function(response){
+		        		layer.open({
+		        			skin: 'layui-layer-molv',
+		        			content: "" + response.msg
+		        		});
+		        		table.reload('modelTable',{
+		        			url: '${request.contextPath}/model/list'
+		        		});
+		        		table.reload('deployModelTable',{
+		        			url: '${request.contextPath}/model/list'
+		        		    ,where: {deployed: true}
+		        		});
+		        	}
+		        });
+		    }
+		  });
+		  
+		  //头工具栏事件
+		  table.on('toolbar(process)', function(obj){
+		    var checkStatus = table.checkStatus(obj.config.id);
+		    var data = checkStatus.data;
+	        if (data.length > 1){
+	        	layer.msg("目前暂支持选中一行");
+	        	return;
+	        }
+	        if (data.length < 1){
+	        	layer.msg("请选择一行数据");
+	        	return;
+	        }
+		    switch(obj.event){
+		      case 'suspend':
+		        var params = {};
+		        $.ajax({
+		        	type: 'POST',
+		        	url: '${request.contextPath}/instance/suspend/' + data[0].id,
+		        	success: function(response){
+		        		layer.open({
+		        			skin: 'layui-layer-molv',
+		        			content: "" + response.msg
+		        		});
+		        	}
+		        });
+		      break;
+		      case 'active':
+			    var params = {};
+			    $.ajax({
+			       type: 'POST',
+			       url: '${request.contextPath}/instance/active/' + data[0].id,
+			       success: function(response){
+			        layer.open({
+			        	skin: 'layui-layer-molv',
+			        	content: "" + response.msg
+			        });
+			       }
+			    });
+			  break;
+		    };
+		  });
+//=============================已部署Table=================================
+	
+		  table.render({
+			    elem: '#deployModelTable'
+			    ,url:'${request.contextPath}/model/list'
+			    ,hight:380
+			    ,where: {deployed: true}
+			    ,toolbar: '#toolsBar'
+			    ,parseData: function(res){ //res 即为原始返回的数据
+			        return {
+			          "code": res.code, //解析接口状态
+			          "msg": res.msg, //解析提示文本
+			          "count": res.data.count, //解析数据长度
+			          "data": res.data.data //解析数据列表
+			        };
+			    }
+			    ,cols: [[
+			      {type: 'checkbox', fixed: 'left'}
+			      ,{field:'id', align: 'center', title: 'ID', sort: true}
+			      ,{field:'deploymentId', title: '部署ID', align: 'center'}
+			      ,{field:'name',  title: '名称' , align: 'center'}
+			      ,{field:'key', title: '模型key', sort: true, align: 'center'}
+			      ,{field:'version', title: '版本' , width:80, align: 'center'}
+			      ,{field:'createTime', title: '创建时间', align: 'center'}
+			      ,{field:'lastUpdateTime', title: '最后更新时间', align: 'center'}
+			      ,{fixed: 'right', width:200, title:'操作', toolbar: '#deplodBar', align: 'center'}
+			    ]]
+			    ,page: true
+			  });
+			  
+		  //监听行工具事件
+		  table.on('tool(deployedModel)', function(obj){
+		    var data = obj.data;
+		    //console.log(obj)
+		    if(obj.event === 'editModel'){
+		    	console.log(data.id);
+		     	layer.open({
+		     		type: 2,
+		     		maxmin: true,
+		     		title: "流程定义图",
+		     		skin: 'layui-layer-molv',
+		     		area: ['1000px', '600px'],
+		     		content: "${request.contextPath}/modeler.html?modelId=" + data.id
+		     	});
+		    } 
+		    if (obj.event === 'deploy'){
+		    	var params = {};
+		        $.ajax({
+		        	type: 'POST',
+		        	data: {modelId: data.id},
+		        	url: '${request.contextPath}/model/deploy',
+		        	success: function(response){
+		        		layer.open({
+		        			skin: 'layui-layer-molv',
+		        			content: "" + response.msg
+		        		});
+		        		table.reload('deployModelTable',{
+		        			url: '${request.contextPath}/model/list'
+		        		    ,where: {deployed: true}
+		        		});
+		        	}
+		        });
+		    }
+		  });
+		  
+	});
+</script>
+<script type="text/html" id="barDemo">
+  <a class="layui-btn layui-btn-xs" lay-event="editModel">编辑流程模型</a>
+  <a class="layui-btn layui-btn-xs" lay-event="deploy">部署发布</a>
+</script>
+<script type="text/html" id="deplodBar">
+  <a class="layui-btn layui-btn-xs" lay-event="editModel">编辑流程模型</a>
+  <a class="layui-btn layui-btn-xs" lay-event="deploy">部署发布</a>
+</script>
+<script type="text/html" id="toolsBar">
+  <a class="layui-btn layui-btn-xs" lay-event="suspend">挂起</a>
+  <a class="layui-btn layui-btn-xs" lay-event="active">恢复</a>
+</script>
+<body>
+ <fieldset class="layui-elem-field">
+  <legend>查询条件</legend>
+   <div class="layui-field-box">
+    
+  </div>
+</fieldset>
+
+<div class="layui-tab">
+  <ul class="layui-tab-title">
+    <li class="layui-this">未部署</li>
+    <li>已部署</li>
+  </ul>
+  <div class="layui-tab-content">
+    <div class="layui-tab-item layui-show">
+    	<table class="layui-hide" id="modelTable" lay-filter="model"></table>
+    </div>
+    <div class="layui-tab-item">
+    	<table class="layui-hide" id="deployModelTable" lay-filter="deployedModel"></table>
+    </div>
+  </div>
+</div>
+
+
+</body>
+</html>

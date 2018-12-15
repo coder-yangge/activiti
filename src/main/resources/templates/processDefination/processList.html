@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<title>Insert title here</title>
+  <link rel="stylesheet" href="../layui/css/layui.css"  media="all">
+</head>
+<script src="../layui/layui.all.js" charset="utf-8"></script>
+<script src="../juqery/jquery.js" charset="utf-8"></script>
+<script type="text/javascript">
+	;!function(){
+	  var layer = layui.layer
+	  ,form = layui.form;
+	 
+	}();
+	$(function (){
+		// layer.msg('Hello World');
+		 var form = layui.form;
+	     form.render(); //更新全部
+		 var table = layui.table;
+		 //var layer = layui.layer; 
+		  table.render({
+		    elem: '#processdef'
+		    ,url:'${request.contextPath}/process/list'
+		    ,hight:380
+		    ,toolbar: '#toolsBar'
+		    ,parseData: function(res){ //res 即为原始返回的数据
+		        return {
+		          "code": res.code, //解析接口状态
+		          "msg": res.msg, //解析提示文本
+		          "count": res.data.count, //解析数据长度
+		          "data": res.data.data //解析数据列表
+		        };
+		    }
+		    ,cols: [[
+		      {type: 'checkbox', fixed: 'left'}
+		      ,{field:'id', align: 'center', title: 'ID', sort: true}
+		      ,{field:'name',  title: '名称' , align: 'center'}
+		      ,{field:'key', title: '流程定义key', sort: true, align: 'center'}
+		      ,{field:'deploymentId', title: '部署ID' ,align: 'center'}
+		      ,{field:'resourceName', title: '流程文件', align: 'center'}
+		      ,{field:'diagramResourceName', title: '流程图', align: 'center'}
+		      ,{field:'version', title: '版本', sort: true, width:80, align: 'center'}
+		      ,{fixed: 'right', title:'操作', toolbar: '#barDemo', align: 'center'}
+		    ]]
+		    ,page: true
+		  });
+		  //监听行工具事件
+		  table.on('tool(process)', function(obj){
+		    var data = obj.data;
+		    //console.log(obj)
+		    if(obj.event === 'acquireImage'){
+		    	console.log(data.resourceName);
+		     	var resourceName = encodeURI(encodeURI(data.diagramResourceName));
+		     	console.log(resourceName);
+		     	layer.open({
+		     		type: 1,
+		     		title: false,
+		     		shadeClose: true,
+		     		area: ['600px', '380px'],
+		     		content: "<image src=${request.contextPath}/process/acquireImage?deploymentId="
+		     				+ data.deploymentId + "&resourceName=" + resourceName + ">"
+		     	});
+		    } 
+		  });
+		  
+		  //头工具栏事件
+		  table.on('toolbar(process)', function(obj){
+		    var checkStatus = table.checkStatus(obj.config.id);
+		    var data = checkStatus.data;
+	        if (data.length > 1){
+	        	layer.msg("目前暂支持选中一行");
+	        	return;
+	        }
+	        if (data.length < 1){
+	        	layer.msg("请选择一行数据");
+	        	return;
+	        }
+		    switch(obj.event){
+		      case 'start':
+		        var params = {};
+		        params.processDefinitionKey = data[0].key;
+		        console.log(params);
+		        $.ajax({
+		        	type: 'POST',
+		        	url: '${request.contextPath}/process/start',
+		        	data: params,
+		        	success: function(response){
+		        		layer.open({
+		        			skin: 'layui-layer-molv',
+		        			content: "流程实例ID:" + response.data
+		        		});
+		        	}
+		        });
+		      break;
+		      case 'suspend':
+		    	layer.open({
+		    		id: 'suspend',
+		    		type: 1,
+		    		skin: 'layui-layer-molv',
+		    		area: ['300px', '220px'],
+		    		btn: ['确定', '取消'],
+			        content: $("#dialog")
+			        ,yes: function(index, layero){
+			        	 var params = {};
+			        	 var processDifinationKey = $("#checkDefinitionKey").is(":checked");
+						 var suspendInstances = $("#processInstances").is(":checked");
+						 params.processDefinitionKey = "";
+						 params.suspendInstances = false;
+						 //console.log(processDifinationKey + suspendInstances);
+						 if (processDifinationKey){
+							 params.processDefinitionKey = data[0].key;
+						 }
+						 if (suspendInstances){
+							 params.suspendInstances = true;
+						 }
+						 params.processDefinitionId = data[0].id;
+						 console.log(params);
+						 suspend(params);
+						 layer.close(index);
+			        }
+			    	,btn2: function(index, layero){
+			    		
+			    	  }
+		    	    ,cancel: function(){ 
+		    		    
+		    		  }
+		    	});
+			  break;
+		      case 'active':
+			    	layer.open({
+			    		type: 1,
+			    		id: 'active',
+			    		skin: 'layui-layer-molv',
+			    		area: ['300px', '220px'],
+			    		btn: ['确定', '取消'],
+				        content: $("#dialog")
+				        ,yes: function(index, layero){
+				        	 var params = {};
+							 var processDifinationKey = $("#checkDefinitionKey").is(":checked");
+							 var suspendInstances = $("#processInstances").is(":checked");
+							 params.processDefinitionKey = "";
+							 params.suspendInstances = false;
+							 console.log(processDifinationKey + suspendInstances);
+							 if (processDifinationKey){
+								 params.processDefinitionKey = data[0].key;
+							 }
+							 if (suspendInstances){
+								 params.suspendInstances = true;
+							 }
+							 params.processDefinitionId = data[0].id;
+							 //console.log(params);
+							 $.ajax({
+							      type: 'POST',
+							      url: '${request.contextPath}/process/active',
+							      data: params,
+							      success: function(data){
+							        layer.alert( data.msg,{
+								        skin: 'layui-layer-molv',
+								        closeBtn: 0
+							        });
+							      }
+							  });
+							 layer.close(index);
+				        }
+				    	,btn2: function(index, layero){
+				    		
+				    	  }
+			    	    ,cancel: function(){ 
+			    		    
+			    		  }
+			    	});
+				  break;
+		    };
+		  });
+	});
+	function suspend(params){
+		//var layer = layui.layer;
+		 $.ajax({
+		      type: 'POST',
+		      url: '${request.contextPath}/process/suspend',
+		      data: params,
+		      success: function(data){
+		        layer.alert(data.msg,{
+			        skin: 'layui-layer-molv',
+			        closeBtn: 0
+		        });
+		      }
+		  });
+	}
+</script>
+<script type="text/html" id="barDemo">
+  <a class="layui-btn layui-btn-xs" lay-event="acquireImage">查看流程图</a>
+</script>
+
+<script type="text/html" id="toolsBar">
+  <a class="layui-btn layui-btn-xs" lay-event="start">新建流程实例</a>
+  <a class="layui-btn layui-btn-xs" lay-event="suspend">挂起</a>
+  <a class="layui-btn layui-btn-xs" lay-event="active">恢复</a>
+</script>
+<body>
+ <fieldset class="layui-elem-field"  >
+  <legend>查询条件</legend>
+   <div class="layui-field-box">
+    
+  </div>
+</fieldset>
+<table class="layui-hide" id="processdef" lay-filter="process"></table>
+
+</body>
+<div class="layui-form" id="dialog" style="margin-top: 20px;" hidden="true">
+	<div class="layui-form-item" >
+    	<label class="layui-form-label" style="width: 180px;">是否选中所有流程</label>
+	    <div class="layui-input-block">
+	        <input type="checkbox" id="checkDefinitionKey" lay-skin="switch" lay-text="是|否">
+	    </div>
+ 	</div>
+ 	<div class="layui-form-item">
+    	<label class="layui-form-label" style="width: 180px;">是否选中所有流程实例</label>
+	    <div class="layui-input-block">
+	        <input type="checkbox" id="processInstances"  lay-skin="switch" lay-text="是|否">
+	    </div>
+ 	</div>
+</div>
+</html>

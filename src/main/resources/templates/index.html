@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<title>Insert title here</title>
+  <link rel="stylesheet" href="layui/css/layui.css"  media="all">
+</head>
+<script src="layui/layui.all.js" charset="utf-8"></script>
+<script src="juqery/jquery.js" charset="utf-8"></script>
+<script type="text/javascript">
+	;!function(){
+	  var layer = layui.layer
+	  ,form = layui.form;
+	 
+	}();
+	$(function (){
+		// layer.msg('Hello World');
+	});
+</script>
+<body>
+ <fieldset class="layui-elem-field" style="margin-left: 20%;margin-right: 20%;margin-top:80px;;text-align: center;" >
+  <legend>导航菜单</legend>
+<!--   <div class="layui-field-box"> -->
+    <div>
+    
+    <a href="${request.contextPath}/process/listPage" class="layui-btn layui-btn-normal layui-btn-radius">流程定义</a>
+    <a href="${request.contextPath}/instance/toInstanceList" class="layui-btn layui-btn-normal layui-btn-radius">流程实例</a>
+    <button class="layui-btn layui-btn-normal layui-btn-radius">自定义流程</button>
+    <br/>
+    <br/>
+    <a href="${request.contextPath}/model/modelmanage" class="layui-btn layui-btn-normal layui-btn-radius">流程模型</a>
+    <a href="${request.contextPath}/model/create" class="layui-btn layui-btn-normal layui-btn-radius">创建模型</a>
+   
+  </div>
+<!--   </div> -->
+</fieldset>
+</body>
+</html>
